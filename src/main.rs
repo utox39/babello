@@ -317,10 +317,6 @@ impl Babello<'_> {
 fn generate_commit_msg_hook(to: Option<&str>, block: bool) -> Result<String, Box<dyn Error>> {
     let to = to.unwrap_or("EN-US");
 
-    if !WRITE_SUPPORTED_LANGUAGES.contains(&to) {
-        return Err(format!("'{to}' unsupported language for commit-msg correction").into());
-    }
-
     let exit_on_issue = if block { "1" } else { "0" };
 
     Ok(COMMIT_MSG_HOOK_TEMPLATE
@@ -348,6 +344,12 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     // Print a git commit-msg hook based on the user's preferences
     if cli.generate_hook_warn || cli.generate_hook_block {
+        if !WRITE_SUPPORTED_LANGUAGES.contains(&language_to) {
+            return Err(
+                format!("'{language_to}' unsupported language for commit-msg improvement").into(),
+            );
+        }
+
         let hook = generate_commit_msg_hook(cli.to.as_deref(), cli.generate_hook_block)?;
         print!("{hook}");
         return Ok(());
