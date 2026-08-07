@@ -82,6 +82,7 @@ Options:
       --generate-hook-warn   Print a git commit-msg hook that warns about spelling/grammar issues
       --generate-hook-block  Print a git commit-msg hook that blocks the commit on spelling/grammar issues
       --json                 Print the translation/improvement as JSON instead of human-readable text
+      --tui                  Launch the interactive TUI
   -h, --help                 Print help
   -V, --version              Print version
 ```
