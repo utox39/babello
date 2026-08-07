@@ -5,14 +5,16 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::json;
 
-const WRITE_SUPPORTED_LANGUAGES: &[&str] = &[
+mod tui;
+
+pub(crate) const WRITE_SUPPORTED_LANGUAGES: &[&str] = &[
     "DE", "EN", "EN-GB", "EN-US", "ES", "FR", "IT", "JA", "KO", "PT", "PT-BR", "PT-PT", "ZH",
     "ZH-HANS",
 ];
 
 const COMMIT_MSG_HOOK_TEMPLATE: &str = include_str!("../templates/commit-msg.sh");
 
-fn languages() -> HashMap<&'static str, &'static str> {
+pub(crate) fn languages() -> HashMap<&'static str, &'static str> {
     HashMap::from([
         ("ACE", "Acehnese"),
         ("AF", "Afrikaans"),
@@ -154,7 +156,8 @@ struct Cli {
         required_unless_present = "usage",
         required_unless_present = "languages",
         required_unless_present = "generate_hook_warn",
-        required_unless_present = "generate_hook_block"
+        required_unless_present = "generate_hook_block",
+        required_unless_present = "tui"
     )]
     text: Option<Vec<String>>,
 
@@ -169,7 +172,8 @@ struct Cli {
         required_unless_present = "languages",
         required_unless_present = "improve",
         required_unless_present = "generate_hook_warn",
-        required_unless_present = "generate_hook_block"
+        required_unless_present = "generate_hook_block",
+        required_unless_present = "tui"
     )]
     to: Option<String>,
 
@@ -196,6 +200,10 @@ struct Cli {
     /// Print the translation/improvement as JSON instead of human-readable text
     #[arg(long)]
     json: bool,
+
+    /// Launch the interactive TUI
+    #[arg(long)]
+    tui: bool,
 }
 
 /// Response body of the DeepL `/v2/translate` endpoint
@@ -207,11 +215,11 @@ struct DeepLTranslateTextRespone {
 
 /// A single translated text
 #[derive(Deserialize)]
-struct DeepLTranslation {
+pub(crate) struct DeepLTranslation {
     /// The language detected for the source text, when `source_lang` was not specified
-    detected_source_language: String,
+    pub(crate) detected_source_language: String,
     /// The translated text
-    text: String,
+    pub(crate) text: String,
     // /// The number of characters billed for this translation
     // billed_characters: Option<u64>,
     // /// The translation engine used to produce this translation
@@ -229,13 +237,13 @@ struct DeepLWriteRephraseRespone {
 
 /// A single spelling/grammar-corrected text
 #[derive(Deserialize)]
-struct DeepLWriteImprovement {
+pub(crate) struct DeepLWriteImprovement {
     /// The language detected for the source text
-    detected_source_language: String,
+    pub(crate) detected_source_language: String,
     // /// The language the text was corrected/improved in
     // target_language: String,
     /// The corrected text
-    text: String,
+    pub(crate) text: String,
 }
 
 /// Response body of the DeepL `/v2/usage` endpoint
@@ -248,22 +256,22 @@ struct DeepLUsageAndLimits {
 }
 
 /// A DeepL API client for a single translation/correction request
-struct Babello<'a> {
+pub(crate) struct Babello<'a> {
     /// HTTP client
-    client: &'a Client,
+    pub(crate) client: &'a Client,
     /// DeepL API Key
-    api_key: &'a str,
+    pub(crate) api_key: &'a str,
     /// The text/s to translate
-    text: Vec<&'a str>,
+    pub(crate) text: Vec<&'a str>,
     /// The language to translate from
-    source_lang: Option<&'a str>,
+    pub(crate) source_lang: Option<&'a str>,
     /// The language to translate to
-    target_lang: &'a str,
+    pub(crate) target_lang: &'a str,
 }
 
 impl Babello<'_> {
     /// Translate text
-    fn translate(&self) -> Result<Vec<DeepLTranslation>, Box<dyn Error>> {
+    pub(crate) fn translate(&self) -> Result<Vec<DeepLTranslation>, Box<dyn Error>> {
         let response = self
             .client
             .post("https://api.deepl.com/v2/translate")
@@ -282,7 +290,7 @@ impl Babello<'_> {
     }
 
     /// Improve text by correcting spelling and grammar errors
-    fn improve(&self) -> Result<Vec<DeepLWriteImprovement>, Box<dyn Error>> {
+    pub(crate) fn improve(&self) -> Result<Vec<DeepLWriteImprovement>, Box<dyn Error>> {
         let response = self
             .client
             .post("https://api.deepl.com/v2/write/rephrase")
@@ -353,6 +361,14 @@ fn run() -> Result<(), Box<dyn Error>> {
         let hook = generate_commit_msg_hook(cli.to.as_deref(), cli.generate_hook_block)?;
         print!("{hook}");
         return Ok(());
+    }
+
+    // Launch the interactive TUI
+    if cli.tui {
+        let client = Client::new();
+        let api_key =
+            env::var("DEEPL_API_KEY").map_err(|_| "DEEPL_API_KEY is not set".to_string())?;
+        return tui::run(client, api_key, languages);
     }
 
     // Check if the 'from' language is supported by DeepL
