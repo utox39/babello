@@ -22,7 +22,7 @@ Babello is a 'bello' CLI translator that uses the DeepL API. There is also a [Ne
 
 ## Requirements
 
-- Rust
+- [Rust](https://rust-lang.org/)
 - A DeepL API Key
 
 ## Installation
