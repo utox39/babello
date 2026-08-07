@@ -13,7 +13,9 @@
 ## Description
 
 Babel: the Babel's tower
+
 l: the L of [DeepL](https://www.deepl.com/en/translator)
+
 o: Oh wow, this is beautiful OR Oh wow, it surprisingly works!
 
 Babello is a 'bello' CLI translator that uses the DeepL API. There is also a [Neovim](https://neovim.io/) plugin!
