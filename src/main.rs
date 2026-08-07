@@ -282,8 +282,6 @@ impl Babello<'_> {
     }
 
     /// Improve text by correcting spelling and grammar errors
-    // TODO: handle unsupported languages
-    // NOTE: supported languages: de, en, en-GB, en-US, es, fr, it, ja, ko, pt, pt-BR, pt-PT, zh, zh-Hans
     fn improve(&self) -> Result<Vec<DeepLWriteImprovement>, Box<dyn Error>> {
         let response = self
             .client
@@ -326,7 +324,6 @@ fn generate_commit_msg_hook(to: Option<&str>, block: bool) -> Result<String, Box
     let exit_on_issue = if block { "1" } else { "0" };
 
     Ok(COMMIT_MSG_HOOK_TEMPLATE
-        // .replace("__BABELLO_FROM_FLAG__", &from_flag)
         .replace("__BABELLO_TO__", to)
         .replace("__BABELLO_EXIT_ON_ISSUE__", exit_on_issue))
 }
