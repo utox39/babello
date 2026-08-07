@@ -145,7 +145,8 @@ require("babello").setup({
 
 ## Roadmap
 
-- Add a TUI (Ratatui of course /s)
+- Improve the TUI
+- Make it configurable
 
 ## Contributing
 
